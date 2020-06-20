@@ -20,6 +20,21 @@ type Item struct {
 	Name string `json:name`
 }
 
+func fetchData(query string) (*http.Response, error) {
+	var npmURL string
+
+	npmURL = "https://api.github.com/search/repositories" + "?q=" + query + "&sort=stars&order=desc"
+
+	// make API request
+	resp, err := http.Get(npmURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+
+}
+
 func main() {
 
 	var queryArg string
@@ -30,19 +45,13 @@ func main() {
 		log.Fatalln("no arg")
 		return
 	}
-	var npmURL string
 
-	npmURL = "https://api.github.com/search/repositories" + "?q=" + queryArg + "&sort=stars&order=desc"
-
-	// make API request
-	resp, err := http.Get(npmURL)
+	resp, err := fetchData(queryArg)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln()
 	}
 
 	defer resp.Body.Close()
-
-	// var prettyJSON bytes.Buffer
 
 	// read body into buffer
 	body, err := ioutil.ReadAll(resp.Body)
@@ -50,20 +59,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// error := json.Indent(&prettyJSON, body, "", "\t")
-	// if error != nil {
-	// 	log.Println("JSON parse error")
-	// }
-
-	//log.Println(prettyJSON.Bytes())
 	var obj Resp
 
 	if err := json.Unmarshal(body, &obj); err != nil {
 		panic(err)
 	}
-
-	// fmt.Printf("%v\n", obj)
-
 	for _, item := range obj.Items {
 		fmt.Println(item.ID)
 	}
